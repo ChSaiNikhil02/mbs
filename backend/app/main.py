@@ -23,12 +23,11 @@ origins = [
     "http://localhost:5173",
     "http://localhost:8080",
     "https://mbs-production.up.railway.app",
-    "https://mbs-blush.vercel.app"
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origin_regex="https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
