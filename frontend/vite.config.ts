@@ -5,6 +5,9 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  define: {
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify('https://mbs-production.up.railway.app')
+  },
   server: {
     host: "::",
     port: 8080,
