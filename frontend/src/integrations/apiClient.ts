@@ -1,6 +1,6 @@
 // C:\Users\SOWMYA\OneDrive\Desktop\modern_digital_banking\frontend\src\integrations\apiClient.ts
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = "https://mbs-production.up.railway.app";
 const DEFAULT_TIMEOUT = 10000; // 10 seconds
 
 interface RequestOptions extends RequestInit {
