@@ -43,7 +43,7 @@ async def register_user(reg_data: schemas.RegistrationRequest, db: Session = Dep
     logger.info(f"User created: {db_user.username} (ID: {db_user.id})")
     return db_user
 
-@router.post("/token/", response_model=schemas.Token)
+@router.post("/token", response_model=schemas.Token)
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
     if not user or not verify_password(form_data.password, user.password_hash):
