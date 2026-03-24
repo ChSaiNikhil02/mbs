@@ -82,7 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       formBody.append("username", username);
       formBody.append("password", password);
 
-      const targetUrl = `${import.meta.env.VITE_API_BASE_URL}/token`;
+      const baseUrl = "https://mbs-production.up.railway.app";
+      const targetUrl = `${baseUrl}/token`;
       console.log("Attempting login at:", targetUrl);
       const response = await fetch(targetUrl, {
         method: "POST",
