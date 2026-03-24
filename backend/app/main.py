@@ -22,7 +22,8 @@ origins = [
     "http://localhost",
     "http://localhost:5173",
     "http://localhost:8080",
-    "https://mbs-production.up.railway.app"
+    "https://mbs-production.up.railway.app",
+    "https://mbs-blush.vercel.app"
 ]
 
 app.add_middleware(
