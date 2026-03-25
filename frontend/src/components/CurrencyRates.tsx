@@ -48,7 +48,7 @@ export default function CurrencyRates({ compact = false }: CurrencyRatesProps) {
             Currency Summary
           </CardTitle>
           <button
-            onClick={() => refetch()}
+            onClick={() => refetch({stale: true})}
             disabled={isFetching}
             className="p-2 rounded-full hover:bg-muted transition-colors"
             title="Refresh rates"
