@@ -46,7 +46,7 @@ app.include_router(rewards.router, prefix="/api/rewards", tags=["Rewards"])
 app.include_router(currency.router, prefix="/api/currency", tags=["Currency"])
 app.include_router(insights.router, prefix="/api/insights", tags=["Insights"])
 app.include_router(exports.router, tags=["Exports"])
-app.include_router(kyc.router, tags=["KYC"])
+app.include_router(kyc.router,prefix="/users/me/kyc", tags=["KYC"])
 
 @app.get("/")
 def read_root():
