@@ -41,7 +41,7 @@ export default function AccountsPage() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   // Updated form state to match backend AccountCreate schema
-  const [form, setForm] = useState({ account_type: "checking", account_number: "" });
+  const [form, setForm] = useState({ account_type: "checking", account_number: "" ,initial_balance: ""});
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -78,10 +78,11 @@ export default function AccountsPage() {
         data: {
           account_type: form.account_type,
           account_number: form.account_number,
+          balance: parseFloat(form.initial_balance) || 0,
         },
       });
       toast({ title: "Account added" });
-      setForm({ account_type: "checking", account_number: "" }); // Reset form
+      setForm({ account_type: "checking", account_number: "" ,initial_balance: ""}); // Reset form
       setDialogOpen(false);
       fetchAccounts(); // Refresh accounts list
     } catch (error: any) {
@@ -140,9 +141,13 @@ export default function AccountsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Account Number</Label> {/* Changed label */}
+                <Label>Account Number</Label>
                 <Input placeholder="e.g., 1234567890" value={form.account_number} onChange={(e) => setForm({ ...form, account_number: e.target.value })} required />
               </div>
+              <div className="space-y-2">
+                <Label>Initial Balance</Label>
+                <Input type="number" placeholder="0.00"value={form.initial_balance} onChange={(e) => setForm({ ...form, initial_balance: e.target.value })} />
+              </div> 
               <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={submitting}>
                 {submitting ? "Adding..." : "Add Account"}
               </Button>
