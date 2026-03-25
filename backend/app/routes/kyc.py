@@ -10,7 +10,7 @@ import app.schemas as schemas
 from app.database import get_db
 from app.dependencies import get_current_user
 
-router = APIRouter(prefix="/users/me/kyc", tags=["KYC"])
+router = APIRouter(tags=["KYC"])
 
 # Directory to save uploaded files
 UPLOAD_DIR = "uploads/kyc"
