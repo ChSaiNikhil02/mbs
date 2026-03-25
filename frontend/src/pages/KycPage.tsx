@@ -76,7 +76,7 @@ export default function KycPage() {
       formData.append("document_type", docType);
 
       // We use fetch directly here because apiClient might be configured for JSON
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/users/me/kyc/upload/`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "https://mbs-production.up.railway.app"}/users/me/kyc/upload/`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`
@@ -104,7 +104,7 @@ export default function KycPage() {
   const handleDelete = async (doc: KycDocument) => {
     if (!token) return;
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/users/me/kyc/documents/${doc.id}`, {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL || "https://mbs-production.up.railway.app"}/users/me/kyc/documents/${doc.id}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`
