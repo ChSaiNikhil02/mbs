@@ -8,3 +8,4 @@ from .bill import BillCreate, BillUpdate, BillResponse
 from .reward import RewardCreate, RewardUpdate, RewardResponse, RewardRedeem
 from .auth import Token, TokenData
 from .common import PREDEFINED_CATEGORIES, MonthlySummary
+from .kyc import KycDocument, KycDocumentCreate
