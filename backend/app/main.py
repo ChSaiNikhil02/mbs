@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 
 from app.database import engine, Base
-from app.routes import auth, users, accounts, transactions, budgets, categories, alerts, bills, rewards, currency, insights, exports
+from app.routes import auth, users, accounts, transactions, budgets, categories, alerts, bills, rewards, currency, insights, exports,kyc
 
 # Configure logging
 logging.basicConfig(
@@ -46,6 +46,7 @@ app.include_router(rewards.router, prefix="/api/rewards", tags=["Rewards"])
 app.include_router(currency.router, prefix="/api/currency", tags=["Currency"])
 app.include_router(insights.router, prefix="/api/insights", tags=["Insights"])
 app.include_router(exports.router, tags=["Exports"])
+app.include_router(kyc.router, tags=["KYC"])
 
 @app.get("/")
 def read_root():
