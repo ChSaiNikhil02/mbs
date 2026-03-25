@@ -7,3 +7,4 @@ from .alert import Alert
 from .category_rule import CategoryRule
 from .bill import Bill
 from .reward import Reward
+from .kyc import KycDocument
