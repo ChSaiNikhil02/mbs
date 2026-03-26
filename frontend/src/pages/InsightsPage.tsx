@@ -66,7 +66,7 @@ export default function InsightsPage() {
       return;
     }
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/export/insights?format=pdf`, {
+      const response = await fetch(`${"https://mbs-production.up.railway.app"}/export/insights?format=pdf`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!response.ok) throw new Error("Export failed");
