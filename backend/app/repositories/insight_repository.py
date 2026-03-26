@@ -97,8 +97,9 @@ class InsightRepository:
     def get_burn_rate(self, user_id: int) -> Dict[str, Any]:
         """
         Calculates burn rate for the current month.
-        Burn rate = Total Spent / Total Budgeted for current month.
-        Also returns pacing info.
+        Burn rate = Total Spent / Budget Base.
+        Budget Base = Max(Total Budgeted, Total Income) for the month.
+        If both are 0, it uses a minimal 1.0 to avoid division by zero.
         """
         now = datetime.utcnow()
         current_month = now.month
@@ -112,7 +113,7 @@ class InsightRepository:
                 models.Budget.year == current_year
             ).scalar() or 0.0
             
-        # 2. Get total spent for this month
+        # 2. Get total spent for this month (debits)
         total_spent = self.db.query(func.sum(models.Transaction.amount)) \
             .join(models.Account, models.Transaction.account_id == models.Account.id) \
             .filter(
@@ -121,18 +122,39 @@ class InsightRepository:
                 extract('month', models.Transaction.txn_date) == current_month,
                 extract('year', models.Transaction.txn_date) == current_year
             ).scalar() or 0.0
+
+        # 3. Get total income for this month (credits) - Fallback base
+        total_income = self.db.query(func.sum(models.Transaction.amount)) \
+            .join(models.Account, models.Transaction.account_id == models.Account.id) \
+            .filter(
+                models.Account.user_id == user_id,
+                models.Transaction.txn_type == 'credit',
+                extract('month', models.Transaction.txn_date) == current_month,
+                extract('year', models.Transaction.txn_date) == current_year
+            ).scalar() or 0.0
             
-        # 3. Calculate pacing
-        # Days passed in month
+        # 4. Calculate pacing
         import calendar
         _, last_day = calendar.monthrange(current_year, current_month)
         days_passed = now.day
         month_progress = (days_passed / last_day) * 100 if last_day > 0 else 0
         
-        budget_usage = (float(total_spent) / float(total_budget)) * 100 if float(total_budget) > 0 else 0
+        # The logic: Use the higher of total_budget or total_income as the basis
+        # This prevents 300%+ percentages if the user hasn't set up all category budgets
+        budget_base = max(float(total_budget), float(total_income))
+        
+        # Avoid division by zero
+        if budget_base <= 0:
+            budget_usage = 0.0
+            # If no budget and no income, but there is spending, use spending as base to show 100%
+            if total_spent > 0:
+                budget_base = float(total_spent)
+                budget_usage = 100.0
+        else:
+            budget_usage = (float(total_spent) / budget_base) * 100
         
         return {
-            "total_budget": float(total_budget),
+            "total_budget": float(budget_base), # We return the effective base
             "total_spent": float(total_spent),
             "budget_usage_percent": round(budget_usage, 2),
             "month_progress_percent": round(month_progress, 2),

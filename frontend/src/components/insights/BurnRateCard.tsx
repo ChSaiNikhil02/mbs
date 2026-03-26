@@ -66,7 +66,7 @@ export default function BurnRateCard({ data, isLoading }: BurnRateCardProps) {
 
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="font-medium text-muted-foreground">Budget Used</span>
+            <span className="font-medium text-muted-foreground">Usage of Base</span>
             <span className={`font-bold ${is_over_pacing ? "text-destructive" : "text-success"}`}>
               {budget_usage_percent.toFixed(0)}%
             </span>
@@ -93,7 +93,7 @@ export default function BurnRateCard({ data, isLoading }: BurnRateCardProps) {
             </p>
             <p className="text-xs text-muted-foreground">
               {is_over_pacing 
-                ? "You're spending faster than expected." 
+                ? "You're spending faster than your monthly base." 
                 : "Your spending is currently within range."}
             </p>
           </div>
@@ -108,9 +108,9 @@ export default function BurnRateCard({ data, isLoading }: BurnRateCardProps) {
             </p>
           </div>
           <div className="bg-muted/30 p-3 rounded-lg">
-            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Remaining</p>
+            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Unspent</p>
             <p className="text-sm font-bold">
-              ₹{(total_budget - total_spent).toFixed(2)}
+              ₹{Math.max(0, total_budget - total_spent).toFixed(2)}
             </p>
           </div>
         </div>
