@@ -109,35 +109,86 @@ async def export_insights(
         elements = []
         styles = getSampleStyleSheet()
         
-        elements.append(Paragraph(f"Financial Insights Report - {current_user.username}", styles['Title']))
-        elements.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
+        # Title and Header
+        elements.append(Paragraph(f"Financial Insights Executive Report", styles['Title']))
+        elements.append(Paragraph(f"User: {current_user.username} | Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles['Normal']))
+        elements.append(Spacer(1, 24))
+        
+        # 1. Executive Summary / Burn Rate
+        elements.append(Paragraph("Monthly Budget Overview", styles['Heading2']))
+        burn = summary["burn_rate"]
+        summary_text = (
+            f"For the current month, your total budget is <b>Rs. {burn['total_budget']:.2f}</b>. "
+            f"You have spent <b>Rs. {burn['total_spent']:.2f}</b> so far, which is <b>{burn['usage_percent']}%</b> of your monthly limit."
+        )
+        elements.append(Paragraph(summary_text, styles['Normal']))
+        elements.append(Spacer(1, 20))
+
+        # 2. Spending by Category
+        elements.append(Paragraph("Spending by Category (Current Month)", styles['Heading2']))
+        if not summary["category_breakdown"]:
+            elements.append(Paragraph("No category data available for this period.", styles['Normal']))
+        else:
+            cat_data = [["Category", "Total Spent"]]
+            for item in summary["category_breakdown"]:
+                cat_data.append([item["Category"], f"Rs. {item['Total_Spent']:.2f}"])
+            
+            t1 = Table(cat_data, colWidths=[200, 150])
+            t1.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#3b82f6")),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.whitesmoke, colors.white])
+            ]))
+            elements.append(t1)
+        elements.append(Spacer(1, 20))
+
+        # 3. Top Merchants
+        elements.append(Paragraph("Top Merchants (Current Month)", styles['Heading2']))
+        if not summary["top_merchants"]:
+            elements.append(Paragraph("No merchant data available.", styles['Normal']))
+        else:
+            merch_data = [["Merchant", "Total Spent"]]
+            for item in summary["top_merchants"]:
+                merch_data.append([item["Merchant"], f"Rs. {item['Total_Spent']:.2f}"])
+            
+            t3 = Table(merch_data, colWidths=[200, 150])
+            t3.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#10b981")),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.whitesmoke, colors.white])
+            ]))
+            elements.append(t3)
         elements.append(Spacer(1, 20))
         
-        # Category Breakdown
-        elements.append(Paragraph("Spending by Category", styles['Heading2']))
-        cat_data = [["Category", "Total Spent"]]
-        for item in summary["category_breakdown"]:
-            cat_data.append([item["Category"], f"Rs. {item['Total_Spent']:.2f}"])
-        
-        t1 = Table(cat_data)
-        t1.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 1, colors.black), ('BACKGROUND', (0,0), (-1,0), colors.lightgrey)]))
-        elements.append(t1)
-        elements.append(Spacer(1, 20))
-        
-        # Monthly Trends
+        # 4. Monthly Trends
         elements.append(Paragraph("Monthly Trends (Last 12 Months)", styles['Heading2']))
-        trend_data = [["Month", "Income", "Expense", "Savings"]]
-        for item in summary["monthly_trends"]:
-            trend_data.append([
-                item["Month"], 
-                f"Rs. {item['Income']:.2f}", 
-                f"Rs. {item['Expense']:.2f}", 
-                f"Rs. {item['Net_Savings']:.2f}"
-            ])
-        
-        t2 = Table(trend_data)
-        t2.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 1, colors.black), ('BACKGROUND', (0,0), (-1,0), colors.lightgrey)]))
-        elements.append(t2)
+        if not summary["monthly_trends"]:
+            elements.append(Paragraph("No historical data available.", styles['Normal']))
+        else:
+            trend_data = [["Month", "Income", "Expense", "Savings"]]
+            for item in summary["monthly_trends"]:
+                trend_data.append([
+                    item["Month"], 
+                    f"Rs. {item['Income']:.2f}", 
+                    f"Rs. {item['Expense']:.2f}", 
+                    f"Rs. {item['Net_Savings']:.2f}"
+                ])
+            
+            t2 = Table(trend_data, colWidths=[100, 100, 100, 100])
+            t2.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#6366f1")),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.whitesmoke, colors.white])
+            ]))
+            elements.append(t2)
         
         doc.build(elements)
         content = buffer.getvalue()
