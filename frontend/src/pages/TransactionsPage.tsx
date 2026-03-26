@@ -69,6 +69,9 @@ export default function TransactionsPage() {
       setLoading(true);
       const transactionsData: Transaction[] = await apiClient("transactions/me/", { token });
       setTransactions(transactionsData);
+      if (transactionsData.length === 0) {
+        console.log("No transactions found for the current user.");
+      }
     } catch (error: any) {
       toast({ 
         title: "Error fetching transactions", 
@@ -130,8 +133,12 @@ export default function TransactionsPage() {
 
   const handleExport = async (format: 'csv' | 'pdf') => {
     if (!token) return;
+    if (transactions.length === 0) {
+      toast({ title: "No data to export", description: "Your transaction list is empty.", variant: "destructive" });
+      return;
+    }
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/export/transactions?format=${format}`, {
+      const response = await fetch(`${"https://mbs-production.up.railway.app"}/export/transactions?format=${format}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!response.ok) throw new Error("Export failed");
@@ -157,6 +164,8 @@ export default function TransactionsPage() {
     );
   }
 
+  const isDataEmpty = transactions.length === 0;
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -165,11 +174,21 @@ export default function TransactionsPage() {
           <p className="text-muted-foreground mt-1">View and categorize all your transaction history</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => handleExport('csv')}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => handleExport('csv')}
+            disabled={isDataEmpty}
+          >
             <Download className="h-4 w-4 mr-2" />
             Export Transactions (CSV)
           </Button>
-          <Button variant="outline" size="sm" onClick={() => handleExport('pdf')}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => handleExport('pdf')}
+            disabled={isDataEmpty}
+          >
             <FileText className="h-4 w-4 mr-2" />
             Export Transactions (PDF)
           </Button>

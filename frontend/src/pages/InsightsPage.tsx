@@ -37,6 +37,10 @@ export default function InsightsPage() {
       setCategoryData(cs);
       setMerchantData(tm);
       setBurnRateData(br);
+
+      if (cf.length === 0 && cs.length === 0 && tm.length === 0 && (!br || br.burn_rate === 0)) {
+        console.log("No financial insights data available for the current user.");
+      }
     } catch (err) {
       setError(true);
     } finally {
@@ -57,6 +61,10 @@ export default function InsightsPage() {
 
   const handleExport = async () => {
     if (!token) return;
+    if (cashflowData.length === 0 && categoryData.length === 0 && merchantData.length === 0 && (!burnRateData || burnRateData.burn_rate === 0)) {
+      toast({ title: "No data to export", description: "Your financial insights are empty.", variant: "destructive" });
+      return;
+    }
     try {
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/export/insights?format=pdf`, {
         headers: { "Authorization": `Bearer ${token}` }
@@ -89,6 +97,8 @@ export default function InsightsPage() {
     );
   }
 
+  const isDataEmpty = cashflowData.length === 0 && categoryData.length === 0 && merchantData.length === 0 && (!burnRateData || burnRateData.burn_rate === 0);
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -96,7 +106,7 @@ export default function InsightsPage() {
           <h1 className="text-3xl font-display font-bold">Financial Insights</h1>
           <p className="text-muted-foreground mt-1">Smart analysis of your spending habits</p>
         </div>
-        <Button onClick={handleExport} className="gap-2">
+        <Button onClick={handleExport} className="gap-2" disabled={isDataEmpty}>
           <FileText className="h-4 w-4" />
           Download Insights Report (PDF)
         </Button>
