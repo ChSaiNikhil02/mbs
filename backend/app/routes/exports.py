@@ -214,7 +214,7 @@ async def export_insights(
                  recommendations.append(f"<b>High Spending in {top_cat['Category']}:</b> This category accounts for your largest expense. Look for loyalty programs or discounts to optimize this spending.")
 
         if not recommendations:
-            recommendations.append("Your finances look stable! Continue tracking your daily expenses to maintain this healthy trend.")
+            recommendations.append("Your finances look stable! You're doing a great job managing your money—keep going and maintain these healthy habits!")
 
         for rec in recommendations:
             elements.append(Paragraph(f"• {rec}", styles['Normal']))

@@ -160,9 +160,9 @@ export default function InsightsPage() {
     // Default if no data-driven suggestions
     if (suggestions.length === 0) {
       suggestions.push({
-        title: "Smart Tip",
-        text: "Track your daily expenses to better understand your spending patterns.",
-        type: "info"
+        title: "All Systems Clear",
+        text: "Your finances are looking great! No immediate actions needed. Keep going and maintain your healthy spending habits.",
+        type: "success"
       });
     }
 
