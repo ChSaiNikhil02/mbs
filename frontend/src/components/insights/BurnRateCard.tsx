@@ -13,7 +13,7 @@ export default function BurnRateCard({ data, isLoading }: BurnRateCardProps) {
     return (
       <Card className="shadow-banking border-none">
         <CardHeader>
-          <CardTitle className="font-display text-lg">Burn Rate</CardTitle>
+          <CardTitle className="font-display text-lg">Financial Health</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[150px] flex items-center justify-center">
@@ -24,97 +24,118 @@ export default function BurnRateCard({ data, isLoading }: BurnRateCardProps) {
     );
   }
 
-  if (!data || data.total_budget === 0) {
-    return (
+  if (!data) return null;
+
+  const {
+    cashflow,
+    budget_adherence,
+    month_progress_percent,
+    daily_burn_rate,
+  } = data as any;
+
+  return (
+    <div className="space-y-6">
+      {/* Block 1: Monthly Cashflow */}
       <Card className="shadow-banking border-none">
-        <CardHeader>
-          <CardTitle className="font-display text-lg">Burn Rate</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle className="font-display text-lg flex items-center justify-between">
+            Monthly Cashflow
+            <span className="text-xs font-normal text-muted-foreground">Income vs Spending</span>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="h-[150px] flex flex-col items-center justify-center text-center text-muted-foreground">
-            <p>No budget data for this month.</p>
-            <p className="text-xs mt-1">Set a budget to track your burn rate.</p>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-muted-foreground flex items-center gap-1">
+                Income: ₹{cashflow.income.toLocaleString()}
+              </span>
+              <span className={`font-bold ${cashflow.is_over_pacing ? "text-destructive" : "text-success"}`}>
+                {cashflow.usage_percent.toFixed(0)}% Used
+              </span>
+            </div>
+            <Progress 
+              value={Math.min(cashflow.usage_percent, 100)} 
+              className={`h-2 ${cashflow.is_over_pacing ? "[&>div]:bg-destructive" : "[&>div]:bg-success"}`} 
+            />
+            <div className="flex justify-between text-[10px] text-muted-foreground italic">
+              <span>Month Progress: {month_progress_percent.toFixed(0)}%</span>
+              <span>Spent: ₹{cashflow.spent.toLocaleString()}</span>
+            </div>
+          </div>
+          
+          <div className={`p-3 rounded-xl flex items-center gap-3 ${cashflow.is_over_pacing ? "bg-destructive/5" : "bg-success/5"}`}>
+            {cashflow.is_over_pacing ? (
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+            )}
+            <p className="text-xs font-medium">
+              {cashflow.is_over_pacing 
+                ? "You are spending faster than your income." 
+                : "Your spending is well within your income."}
+            </p>
           </div>
         </CardContent>
       </Card>
-    );
-  }
 
-  const {
-    budget_usage_percent,
-    month_progress_percent,
-    is_over_pacing,
-    total_spent,
-    total_budget,
-    daily_burn_rate,
-  } = data;
+      {/* Block 2: Budget Adherence */}
+      <Card className="shadow-banking border-none">
+        <CardHeader className="pb-2">
+          <CardTitle className="font-display text-lg flex items-center justify-between">
+            Budget Adherence
+            <span className="text-xs font-normal text-muted-foreground">Category Targets</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {budget_adherence.limit > 0 ? (
+            <>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-muted-foreground">
+                    Budgeted: ₹{budget_adherence.limit.toLocaleString()}
+                  </span>
+                  <span className={`font-bold ${budget_adherence.is_over_pacing ? "text-destructive" : "text-success"}`}>
+                    {budget_adherence.usage_percent.toFixed(0)}%
+                  </span>
+                </div>
+                <Progress 
+                  value={Math.min(budget_adherence.usage_percent, 100)} 
+                  className={`h-2 ${budget_adherence.is_over_pacing ? "[&>div]:bg-destructive" : "[&>div]:bg-success"}`} 
+                />
+                <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>Spent in categories: ₹{budget_adherence.spent.toLocaleString()}</span>
+                  <span>Rem: ₹{Math.max(0, budget_adherence.limit - budget_adherence.spent).toLocaleString()}</span>
+                </div>
+              </div>
+              <div className={`p-3 rounded-xl flex items-center gap-3 ${budget_adherence.is_over_pacing ? "bg-destructive/5" : "bg-success/5"}`}>
+                <TrendingUp className={`h-4 w-4 shrink-0 ${budget_adherence.is_over_pacing ? "text-destructive" : "text-success"}`} />
+                <p className="text-xs font-medium">
+                  {budget_adherence.is_over_pacing 
+                    ? "Budget exceeded for set categories." 
+                    : "On track with your category goals."}
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="h-[100px] flex flex-col items-center justify-center text-center text-muted-foreground">
+              <p className="text-xs">No specific category budgets set.</p>
+              <Button variant="link" className="text-[10px] h-auto p-0" onClick={() => window.location.href='/budgets'}>
+                Set Budgets
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-  return (
-    <Card className="shadow-banking border-none">
-      <CardHeader>
-        <CardTitle className="font-display text-lg">Burn Rate</CardTitle>
-        <p className="text-sm text-muted-foreground">Budget usage vs month progress</p>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="font-medium text-muted-foreground">Month Progress</span>
-            <span className="font-bold">{month_progress_percent.toFixed(0)}%</span>
-          </div>
-          <Progress value={month_progress_percent} className="h-2 bg-muted" />
+      {/* Burn Rate Stat */}
+      <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-primary uppercase tracking-wider">Avg Daily Burn</p>
+          <TrendingUp className="h-4 w-4 text-primary" />
         </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="font-medium text-muted-foreground">Usage of Base</span>
-            <span className={`font-bold ${is_over_pacing ? "text-destructive" : "text-success"}`}>
-              {budget_usage_percent.toFixed(0)}%
-            </span>
-          </div>
-          <Progress 
-            value={Math.min(budget_usage_percent, 100)} 
-            className={`h-2 ${is_over_pacing ? "[&>div]:bg-destructive" : "[&>div]:bg-success"}`} 
-          />
-        </div>
-
-        <div className="pt-4 border-t flex items-center gap-3">
-          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-            is_over_pacing ? "bg-destructive/10" : "bg-success/10"
-          }`}>
-            {is_over_pacing ? (
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-            ) : (
-              <CheckCircle2 className="h-5 w-5 text-success" />
-            )}
-          </div>
-          <div>
-            <p className="text-sm font-semibold">
-              {is_over_pacing ? "Over Pacing" : "Healthy Pacing"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {is_over_pacing 
-                ? "You're spending faster than your monthly base." 
-                : "Your spending is currently within range."}
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-muted/30 p-3 rounded-lg">
-            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Avg Daily</p>
-            <p className="text-sm font-bold flex items-center gap-1">
-              <TrendingUp className="h-3 w-3 text-primary" />
-              ₹{daily_burn_rate.toFixed(2)}
-            </p>
-          </div>
-          <div className="bg-muted/30 p-3 rounded-lg">
-            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Unspent</p>
-            <p className="text-sm font-bold">
-              ₹{Math.max(0, total_budget - total_spent).toFixed(2)}
-            </p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        <p className="text-2xl font-bold mt-1">₹{daily_burn_rate.toLocaleString()}</p>
+        <p className="text-[10px] text-muted-foreground mt-1 italic">Average spending per day this month</p>
+      </div>
+    </div>
   );
 }

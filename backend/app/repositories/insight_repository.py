@@ -96,34 +96,15 @@ class InsightRepository:
 
     def get_burn_rate(self, user_id: int) -> Dict[str, Any]:
         """
-        Calculates burn rate for the current month.
-        Burn rate = Total Spent / Budget Base.
-        Budget Base = Max(Total Budgeted, Total Income) for the month.
-        If both are 0, it uses a minimal 1.0 to avoid division by zero.
+        Calculates financial health in two parts:
+        1. Cashflow: Total Income vs Total Spending (Debits)
+        2. Budget Adherence: Total of set Budgets vs Spending in those specific categories
         """
         now = datetime.utcnow()
         current_month = now.month
         current_year = now.year
         
-        # 1. Get total budgeted for this month
-        total_budget = self.db.query(func.sum(models.Budget.monthly_limit)) \
-            .filter(
-                models.Budget.user_id == user_id,
-                models.Budget.month == current_month,
-                models.Budget.year == current_year
-            ).scalar() or 0.0
-            
-        # 2. Get total spent for this month (debits)
-        total_spent = self.db.query(func.sum(models.Transaction.amount)) \
-            .join(models.Account, models.Transaction.account_id == models.Account.id) \
-            .filter(
-                models.Account.user_id == user_id,
-                models.Transaction.txn_type == 'debit',
-                extract('month', models.Transaction.txn_date) == current_month,
-                extract('year', models.Transaction.txn_date) == current_year
-            ).scalar() or 0.0
-
-        # 3. Get total income for this month (credits) - Fallback base
+        # 1. Total Income (Credits)
         total_income = self.db.query(func.sum(models.Transaction.amount)) \
             .join(models.Account, models.Transaction.account_id == models.Account.id) \
             .filter(
@@ -132,32 +113,60 @@ class InsightRepository:
                 extract('month', models.Transaction.txn_date) == current_month,
                 extract('year', models.Transaction.txn_date) == current_year
             ).scalar() or 0.0
+
+        # 2. Total Spending (All Debits)
+        total_spent = self.db.query(func.sum(models.Transaction.amount)) \
+            .join(models.Account, models.Transaction.account_id == models.Account.id) \
+            .filter(
+                models.Account.user_id == user_id,
+                models.Transaction.txn_type == 'debit',
+                extract('month', models.Transaction.txn_date) == current_month,
+                extract('year', models.Transaction.txn_date) == current_year
+            ).scalar() or 0.0
             
-        # 4. Calculate pacing
+        # 3. Budget Adherence (Sum of budgets vs Spending in those categories only)
+        # Get categories that have a budget
+        budgets = self.db.query(models.Budget.category, models.Budget.monthly_limit) \
+            .filter(
+                models.Budget.user_id == user_id,
+                models.Budget.month == current_month,
+                models.Budget.year == current_year
+            ).all()
+        
+        total_budgeted_limit = sum(float(b.monthly_limit) for b in budgets)
+        budgeted_categories = [b.category for b in budgets]
+        
+        spent_on_budgeted_categories = 0.0
+        if budgeted_categories:
+            spent_on_budgeted_categories = self.db.query(func.sum(models.Transaction.amount)) \
+                .join(models.Account, models.Transaction.account_id == models.Account.id) \
+                .filter(
+                    models.Account.user_id == user_id,
+                    models.Transaction.txn_type == 'debit',
+                    models.Transaction.category.in_(budgeted_categories),
+                    extract('month', models.Transaction.txn_date) == current_month,
+                    extract('year', models.Transaction.txn_date) == current_year
+                ).scalar() or 0.0
+
+        # Calculate Pacing
         import calendar
         _, last_day = calendar.monthrange(current_year, current_month)
         days_passed = now.day
         month_progress = (days_passed / last_day) * 100 if last_day > 0 else 0
         
-        # The logic: Use the higher of total_budget or total_income as the basis
-        # This prevents 300%+ percentages if the user hasn't set up all category budgets
-        budget_base = max(float(total_budget), float(total_income))
-        
-        # Avoid division by zero
-        if budget_base <= 0:
-            budget_usage = 0.0
-            # If no budget and no income, but there is spending, use spending as base to show 100%
-            if total_spent > 0:
-                budget_base = float(total_spent)
-                budget_usage = 100.0
-        else:
-            budget_usage = (float(total_spent) / budget_base) * 100
-        
         return {
-            "total_budget": float(budget_base), # We return the effective base
-            "total_spent": float(total_spent),
-            "budget_usage_percent": round(budget_usage, 2),
+            "cashflow": {
+                "income": float(total_income),
+                "spent": float(total_spent),
+                "usage_percent": round((float(total_spent) / float(total_income) * 100), 2) if total_income > 0 else 0,
+                "is_over_pacing": (float(total_spent) / float(total_income) * 100) > month_progress if total_income > 0 else False
+            },
+            "budget_adherence": {
+                "limit": float(total_budgeted_limit),
+                "spent": float(spent_on_budgeted_categories),
+                "usage_percent": round((float(spent_on_budgeted_categories) / float(total_budgeted_limit) * 100), 2) if total_budgeted_limit > 0 else 0,
+                "is_over_pacing": (float(spent_on_budgeted_categories) / float(total_budgeted_limit) * 100) > month_progress if total_budgeted_limit > 0 else False
+            },
             "month_progress_percent": round(month_progress, 2),
-            "is_over_pacing": budget_usage > month_progress,
             "daily_burn_rate": round(float(total_spent) / days_passed, 2) if days_passed > 0 else 0.0
         }
