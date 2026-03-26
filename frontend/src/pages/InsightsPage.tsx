@@ -99,6 +99,78 @@ export default function InsightsPage() {
 
   const isDataEmpty = cashflowData.length === 0 && categoryData.length === 0 && merchantData.length === 0 && (!burnRateData || burnRateData.burn_rate === 0);
 
+  const generateSuggestions = () => {
+    const suggestions = [];
+    
+    // 1. Burn Rate Suggestions
+    if (burnRateData) {
+      if (burnRateData.is_over_pacing) {
+        suggestions.push({
+          title: "High Spending Pace",
+          text: `You've used ${burnRateData.budget_usage_percent}% of your budget, but the month is only ${burnRateData.month_progress_percent}% complete. Try to reduce non-essential spending.`,
+          type: "warning"
+        });
+      } else if (burnRateData.budget_usage_percent > 90) {
+        suggestions.push({
+          title: "Budget Alert",
+          text: "You are very close to your monthly budget limit. Monitor your next few transactions closely.",
+          type: "warning"
+        });
+      }
+    }
+
+    // 2. Cashflow Suggestions
+    if (cashflowData.length > 0) {
+      const latestMonth = cashflowData[0].month;
+      const monthlyData = cashflowData.filter(d => d.month === latestMonth);
+      const income = monthlyData.find(d => d.txn_type === "credit")?.total_amount || 0;
+      const expense = monthlyData.find(d => d.txn_type === "debit")?.total_amount || 0;
+
+      if (expense > income && income > 0) {
+        suggestions.push({
+          title: "Negative Cashflow",
+          text: "This month's expenses exceed your income. Consider reviewing your subscriptions or recurring bills.",
+          type: "danger"
+        });
+      } else if (income > expense) {
+        const savings = income - expense;
+        const savingsRate = (savings / income) * 100;
+        if (savingsRate > 20) {
+          suggestions.push({
+            title: "Great Savings!",
+            text: `You've saved ${savingsRate.toFixed(1)}% of your income this month. Consider moving ₹${(savings * 0.5).toFixed(0)} to a high-yield savings account.`,
+            type: "success"
+          });
+        }
+      }
+    }
+
+    // 3. Category Suggestions
+    if (categoryData.length > 0) {
+      const topCategory = categoryData[0];
+      if (topCategory.total_amount > 5000) {
+        suggestions.push({
+          title: `Focus on ${topCategory.category}`,
+          text: `Your highest spending is in ${topCategory.category}. Check for cheaper alternatives or bulk buying options in this category.`,
+          type: "info"
+        });
+      }
+    }
+
+    // Default if no data-driven suggestions
+    if (suggestions.length === 0) {
+      suggestions.push({
+        title: "Smart Tip",
+        text: "Track your daily expenses to better understand your spending patterns.",
+        type: "info"
+      });
+    }
+
+    return suggestions;
+  };
+
+  const suggestions = generateSuggestions();
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -139,15 +211,38 @@ export default function InsightsPage() {
             isLoading={loading} 
           />
           
-          {/* Quick Tips placeholder */}
-          <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10 border-dashed">
-            <h3 className="font-semibold mb-2 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-primary" />
-              Smart Tip
-            </h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Based on your top merchants, you could save up to ₹1,200/month by switching to a preferred loyalty partner.
-            </p>
+          {/* Dynamic Suggestions */}
+          <div className="space-y-4">
+            <h3 className="font-display font-semibold text-lg px-1">Personalized Tips</h3>
+            {suggestions.map((tip, idx) => (
+              <div 
+                key={idx} 
+                className={`p-5 rounded-2xl border border-dashed animate-fade-in`}
+                style={{ 
+                  backgroundColor: tip.type === 'warning' ? 'rgba(245, 158, 11, 0.05)' : 
+                                   tip.type === 'danger' ? 'rgba(239, 68, 68, 0.05)' : 
+                                   tip.type === 'success' ? 'rgba(16, 185, 129, 0.05)' : 
+                                   'rgba(59, 130, 246, 0.05)',
+                  borderColor: tip.type === 'warning' ? 'rgba(245, 158, 11, 0.2)' : 
+                               tip.type === 'danger' ? 'rgba(239, 68, 68, 0.2)' : 
+                               tip.type === 'success' ? 'rgba(16, 185, 129, 0.2)' : 
+                               'rgba(59, 130, 246, 0.2)'
+                }}
+              >
+                <h4 className="font-semibold mb-1 flex items-center gap-2 text-sm">
+                  <span className={`h-2 w-2 rounded-full ${
+                    tip.type === 'warning' ? 'bg-amber-500' : 
+                    tip.type === 'danger' ? 'bg-red-500' : 
+                    tip.type === 'success' ? 'bg-emerald-500' : 
+                    'bg-blue-500'
+                  }`} />
+                  {tip.title}
+                </h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {tip.text}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

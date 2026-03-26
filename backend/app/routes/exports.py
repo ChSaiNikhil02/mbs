@@ -189,6 +189,36 @@ async def export_insights(
                 ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.whitesmoke, colors.white])
             ]))
             elements.append(t2)
+        elements.append(Spacer(1, 24))
+
+        # 5. Financial Recommendations (New)
+        elements.append(Paragraph("Personalized Recommendations", styles['Heading2']))
+        recommendations = []
+        
+        # Burn Rate Logic
+        if burn["usage_percent"] > 80:
+            recommendations.append("<b>Budget Alert:</b> Your spending has exceeded 80% of your budget. We recommend pausing non-essential purchases for the remainder of the month.")
+        
+        # Savings Logic (from Monthly Trends)
+        if summary["monthly_trends"]:
+            latest = summary["monthly_trends"][0]
+            if latest["Net_Savings"] < 0:
+                recommendations.append("<b>Savings Warning:</b> You had a deficit this month. Review your 'Top Merchants' to identify potential areas for immediate cost-cutting.")
+            elif latest["Income"] > 0 and (latest["Net_Savings"] / latest["Income"]) > 0.2:
+                recommendations.append(f"<b>Excellent Savings:</b> You saved over 20% of your income! Consider moving Rs. {latest['Net_Savings']*0.5:.2f} to your investment portfolio.")
+
+        # Category Logic
+        if summary["category_breakdown"]:
+            top_cat = summary["category_breakdown"][0]
+            if top_cat["Total_Spent"] > 5000:
+                 recommendations.append(f"<b>High Spending in {top_cat['Category']}:</b> This category accounts for your largest expense. Look for loyalty programs or discounts to optimize this spending.")
+
+        if not recommendations:
+            recommendations.append("Your finances look stable! Continue tracking your daily expenses to maintain this healthy trend.")
+
+        for rec in recommendations:
+            elements.append(Paragraph(f"• {rec}", styles['Normal']))
+            elements.append(Spacer(1, 6))
         
         doc.build(elements)
         content = buffer.getvalue()
