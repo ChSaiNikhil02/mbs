@@ -39,19 +39,24 @@ export default function AlertsPage() {
     markAllAsRead.mutate();
   };
 
-  const getAlertIcon = (type: string) => {
-    switch (type) {
+  const getAlertIcon = (alert: Alert) => {
+    const isUrgent = alert.message.includes("URGENT");
+    switch (alert.type) {
       case "budget_exceeded": return <AlertTriangle className="h-5 w-5 text-destructive" />;
-      case "bill_due": return <Calendar className="h-5 w-5 text-warning" />;
+      case "bill_due": 
+        return isUrgent 
+          ? <XCircle className="h-5 w-5 text-red-600 animate-pulse" /> 
+          : <Calendar className="h-5 w-5 text-warning" />;
       case "low_balance": return <Wallet className="h-5 w-5 text-primary" />;
       default: return <Bell className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
-  const getAlertLabel = (type: string) => {
-    switch (type) {
+  const getAlertLabel = (alert: Alert) => {
+    const isUrgent = alert.message.includes("URGENT");
+    switch (alert.type) {
       case "budget_exceeded": return "Budget Exceeded";
-      case "bill_due": return "Bill Due";
+      case "bill_due": return isUrgent ? "CRITICAL: OVERDUE" : "Bill Due";
       case "low_balance": return "Low Balance";
       default: return "Notification";
     }
@@ -93,7 +98,7 @@ export default function AlertsPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" /> {filter === "all" ? "All Types" : getAlertLabel(filter)}
+                <Filter className="h-4 w-4 mr-2" /> {filter === "all" ? "All Types" : filter}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -118,29 +123,35 @@ export default function AlertsPage() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {filteredAlerts.map((alert) => (
-                <div 
-                  key={alert.id} 
-                  className={`group px-6 py-5 flex items-start justify-between hover:bg-muted/30 transition-all ${
-                    !alert.is_read ? "bg-primary/[0.02]" : ""
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={`mt-1 h-10 w-10 rounded-xl flex items-center justify-center ${
-                      !alert.is_read ? "bg-background shadow-sm border" : "bg-muted/50"
-                    }`}>
-                      {getAlertIcon(alert.type)}
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-semibold ${!alert.is_read ? "text-foreground" : "text-muted-foreground"}`}>
-                          {getAlertLabel(alert.type)}
-                        </span>
-                        {!alert.is_read && <Badge className="h-2 w-2 rounded-full p-0" />}
+              {filteredAlerts.map((alert) => {
+                const isUrgent = alert.message.includes("URGENT");
+                return (
+                  <div 
+                    key={alert.id} 
+                    className={`group px-6 py-5 flex items-start justify-between hover:bg-muted/30 transition-all ${
+                      !alert.is_read ? (isUrgent ? "bg-red-50 dark:bg-red-950/10" : "bg-primary/[0.02]") : ""
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`mt-1 h-10 w-10 rounded-xl flex items-center justify-center ${
+                        !alert.is_read ? "bg-background shadow-sm border" : "bg-muted/50"
+                      }`}>
+                        {getAlertIcon(alert)}
                       </div>
-                      <p className={`text-sm leading-relaxed ${!alert.is_read ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                        {alert.message}
-                      </p>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-semibold ${
+                            !alert.is_read ? (isUrgent ? "text-red-600" : "text-foreground") : "text-muted-foreground"
+                          }`}>
+                            {getAlertLabel(alert)}
+                          </span>
+                          {!alert.is_read && <Badge className={`h-2 w-2 rounded-full p-0 ${isUrgent ? "bg-red-600" : ""}`} />}
+                        </div>
+                        <p className={`text-sm leading-relaxed ${
+                          !alert.is_read ? (isUrgent ? "text-red-700 dark:text-red-400 font-bold" : "text-foreground font-medium") : "text-muted-foreground"
+                        }`}>
+                          {alert.message}
+                        </p>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />

@@ -27,7 +27,19 @@ class AlertService:
         return existing
 
     def create_bill_reminder(self, user_id: int, biller_name: str, due_date: str, amount: float):
-        alert_msg = f"Reminder: Bill for {biller_name} is due on {due_date}. Amount: ₹{amount:.2f}"
+        from datetime import datetime
+        due_dt = datetime.strptime(due_date, "%Y-%m-%d").date()
+        today = datetime.utcnow().date()
+        
+        if today > due_dt:
+            status_prefix = "⚠️ URGENT: Overdue Bill"
+            days_diff = (today - due_dt).days
+            time_msg = f"was due {days_diff} days ago on {due_date}"
+        else:
+            status_prefix = "📅 Reminder: Upcoming Bill"
+            time_msg = f"is due on {due_date}"
+
+        alert_msg = f"{status_prefix} for {biller_name} {time_msg}. Amount: ₹{amount:,.2f}. Please pay immediately to avoid penalties."
         
         existing = self.db.query(models.Alert).filter(
             models.Alert.user_id == user_id,
