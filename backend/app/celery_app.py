@@ -8,7 +8,9 @@ broker_url = settings.CELERY_BROKER_URL
 celery_app = Celery(
     "worker",
     broker=broker_url,
-    backend=broker_url
+    backend=broker_url,
+    # This is the industry standard way to include tasks without circular imports
+    include=['app.tasks.bill_reminders', 'app.tasks.alert_tasks']
 )
 
 celery_app.conf.update(
@@ -19,7 +21,6 @@ celery_app.conf.update(
     result_serializer="json",
     timezone='Asia/Kolkata',
     enable_utc=False,
-    broker_transport_options={'visibility_timeout': 3600}, 
 )
 
 celery_app.conf.beat_schedule = {
@@ -36,6 +37,3 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(minute=0, hour="*/6"),
     },
 }
-
-# Use discover_tasks without explicit imports at the top to avoid circular dependency
-celery_app.autodiscover_tasks(["app.tasks"])
