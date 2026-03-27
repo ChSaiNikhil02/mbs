@@ -3,7 +3,10 @@ from celery.schedules import crontab
 from app.config import settings
 import os
 
-# Explicitly pull the URL and ensure it's not empty
+# Explicitly import tasks to ensure they are registered
+import app.tasks.bill_reminders
+import app.tasks.alert_tasks
+
 broker_url = settings.CELERY_BROKER_URL
 
 celery_app = Celery(
@@ -12,7 +15,6 @@ celery_app = Celery(
     backend=broker_url
 )
 
-# FORCE REDIS SETTINGS
 celery_app.conf.update(
     broker_url=broker_url,
     result_backend=broker_url,
@@ -21,7 +23,6 @@ celery_app.conf.update(
     result_serializer="json",
     timezone='Asia/Kolkata',
     enable_utc=False,
-    # This prevents the "AMQP" fallback issue
     broker_transport_options={'visibility_timeout': 3600}, 
 )
 
