@@ -185,7 +185,8 @@ export default function AlertsPage() {
                     </Button>
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
           )}
         </CardContent>
