@@ -24,7 +24,7 @@ from celery.schedules import crontab
 celery_app.conf.beat_schedule = {
     "check-bills-every-morning": {
         "task": "app.tasks.bill_reminders.check_upcoming_bills",
-        "schedule": crontab(hour=11, minute=0), # 4:30 PM IST
+        "schedule": crontab(hour=11, minute=45), # 5:15 PM IST
     },
     "comprehensive-alert-scan-every-6-hours": {
         "task": "app.tasks.alert_tasks.run_comprehensive_alert_scan",
