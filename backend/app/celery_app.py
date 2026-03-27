@@ -9,7 +9,6 @@ celery_app = Celery(
     "worker",
     broker=broker_url,
     backend=broker_url,
-    # This is the industry standard way to include tasks without circular imports
     include=['app.tasks.bill_reminders', 'app.tasks.alert_tasks']
 )
 
@@ -24,14 +23,12 @@ celery_app.conf.update(
 )
 
 celery_app.conf.beat_schedule = {
-    "celery-heartbeat-every-minute": {
-        "task": "app.tasks.bill_reminders.check_upcoming_bills",
-        "schedule": 60.0, 
-    },
-    "check-bills-daily": {
+    # Main Daily Bill Check at 9 AM IST
+    "check-bills-daily-9am": {
         "task": "app.tasks.bill_reminders.check_upcoming_bills",
         "schedule": crontab(hour=9, minute=0),
     },
+    # Periodic System Health Scan (Balances, Budgets)
     "comprehensive-alert-scan-every-6-hours": {
         "task": "app.tasks.alert_tasks.run_comprehensive_alert_scan",
         "schedule": crontab(minute=0, hour="*/6"),

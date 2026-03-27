@@ -31,23 +31,33 @@ class AlertService:
         due_dt = datetime.strptime(due_date, "%Y-%m-%d").date()
         today = datetime.utcnow().date()
         
-        if today > due_dt:
+        days_diff = (today - due_dt).days
+        
+        if days_diff > 0:
             status_prefix = "⚠️ URGENT: Overdue Bill"
-            days_diff = (today - due_dt).days
-            time_msg = f"was due {days_diff} days ago on {due_date}"
+            time_msg = f"was due {days_diff} day{'s' if days_diff > 1 else ''} ago on {due_date}"
+        elif days_diff == 0:
+            status_prefix = "🚨 LAST DAY: Bill Due Today"
+            time_msg = f"is due TODAY ({due_date})"
         else:
             status_prefix = "📅 Reminder: Upcoming Bill"
-            time_msg = f"is due on {due_date}"
+            abs_diff = abs(days_diff)
+            time_msg = f"is due in {abs_diff} day{'s' if abs_diff > 1 else ''} on {due_date}"
 
         alert_msg = f"{status_prefix} for {biller_name} {time_msg}. Amount: ₹{amount:,.2f}. Please pay immediately to avoid penalties."
         
-        existing = self.db.query(models.Alert).filter(
+        # New De-duplication Rule: Check if we already sent ANY alert for this specific biller/amount TODAY
+        # This allows a new alert every day even if the bill is the same
+        from sqlalchemy import func
+        existing_today = self.db.query(models.Alert).filter(
             models.Alert.user_id == user_id,
             models.Alert.type == "bill_due",
-            models.Alert.message == alert_msg
+            models.Alert.message.like(f"%{biller_name}%"),
+            models.Alert.message.like(f"%₹{amount:,.2f}%"),
+            func.date(models.Alert.created_at) == today
         ).first()
         
-        if not existing:
+        if not existing_today:
             new_alert = models.Alert(
                 user_id=user_id,
                 type="bill_due",
@@ -56,7 +66,7 @@ class AlertService:
             )
             self.db.add(new_alert)
             return new_alert
-        return existing
+        return existing_today
 
     def create_low_balance_alert(self, user_id: int, account_number: str, balance: float):
         """Triggers an alert when an account balance falls below ₹1000."""
