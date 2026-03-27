@@ -11,11 +11,11 @@ from app.dependencies import get_current_user
 
 router = APIRouter()
 
-@router.get("/me/", response_model=schemas.UserInDB)
+@router.get("/me", response_model=schemas.UserInDB)
 async def read_users_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
-@router.patch("/me/", response_model=schemas.UserInDB)
+@router.patch("/me", response_model=schemas.UserInDB)
 async def update_users_me(
     user_update: schemas.UserUpdate, 
     current_user: models.User = Depends(get_current_user), 
