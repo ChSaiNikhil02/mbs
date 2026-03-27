@@ -9,9 +9,16 @@ class Settings:
     ALGORITHM = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
     
-    # Using specific production Redis URL provided by user
-    # Note: Celery requires redis:// protocol, not https://
-    CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://redis-production-86c0.up.railway.app")
+    # RAILWAY PROOF REDIS CONFIG:
+    # 1. First check REDIS_URL (Standard Railway)
+    # 2. Then check CELERY_BROKER_URL (Custom)
+    # 3. Then check REDIS_PRIVATE_URL (Internal Railway)
+    # 4. Fallback to user-provided URL
+    # 5. Final fallback to localhost
+    REDIS_URL = os.getenv("REDIS_URL") or os.getenv("REDIS_PRIVATE_URL")
+    USER_PROVIDED_URL = "redis://redis-production-86c0.up.railway.app"
+    
+    CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", REDIS_URL or USER_PROVIDED_URL or "redis://localhost:6373/0")
     
     EXCHANGERATE_API_KEY = os.getenv("EXCHANGERATE_API_KEY", "your_default_key_here")
 
