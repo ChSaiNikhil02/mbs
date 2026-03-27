@@ -3,10 +3,6 @@ from celery.schedules import crontab
 from app.config import settings
 import os
 
-# Explicitly import tasks to ensure they are registered
-import app.tasks.bill_reminders
-import app.tasks.alert_tasks
-
 broker_url = settings.CELERY_BROKER_URL
 
 celery_app = Celery(
@@ -41,4 +37,5 @@ celery_app.conf.beat_schedule = {
     },
 }
 
-celery_app.autodiscover_tasks(["app.tasks"], force=True)
+# Use discover_tasks without explicit imports at the top to avoid circular dependency
+celery_app.autodiscover_tasks(["app.tasks"])
