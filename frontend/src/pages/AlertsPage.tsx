@@ -152,16 +152,16 @@ export default function AlertsPage() {
                         }`}>
                           {alert.message}
                         </p>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {formatDistanceToNow(parseUtcDate(alert.created_at), { addSuffix: true })}
-                        </span>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {formatDistanceToNow(parseUtcDate(alert.created_at), { addSuffix: true })}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {!alert.is_read && (
                       <Button 
                         variant="ghost" 
