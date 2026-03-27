@@ -1,36 +1,38 @@
 from celery import Celery
 from celery.schedules import crontab
 from app.config import settings
+import os
+
+# Explicitly pull the URL and ensure it's not empty
+broker_url = settings.CELERY_BROKER_URL
 
 celery_app = Celery(
     "worker",
-    broker=settings.CELERY_BROKER_URL,
-    backend=settings.CELERY_BROKER_URL
+    broker=broker_url,
+    backend=broker_url
 )
 
-# Use IST Timezone directly to avoid math errors
-celery_app.conf.timezone = 'Asia/Kolkata'
-celery_app.conf.enable_utc = False
-
-celery_app.conf.task_routes = {
-    "app.tasks.bill_reminders.*": "main-queue",
-}
-
+# FORCE REDIS SETTINGS
 celery_app.conf.update(
+    broker_url=broker_url,
+    result_backend=broker_url,
     task_serializer="json",
     accept_content=["json"],
     result_serializer="json",
+    timezone='Asia/Kolkata',
+    enable_utc=False,
+    # This prevents the "AMQP" fallback issue
+    broker_transport_options={'visibility_timeout': 3600}, 
 )
 
 celery_app.conf.beat_schedule = {
-    # This runs every 1 minute so we can see if Celery is alive in the logs
     "celery-heartbeat-every-minute": {
         "task": "app.tasks.bill_reminders.check_upcoming_bills",
         "schedule": 60.0, 
     },
-    "check-bills-ist-afternoon": {
+    "check-bills-daily": {
         "task": "app.tasks.bill_reminders.check_upcoming_bills",
-        "schedule": crontab(hour=17, minute=25), # 5:25 PM IST
+        "schedule": crontab(hour=9, minute=0),
     },
     "comprehensive-alert-scan-every-6-hours": {
         "task": "app.tasks.alert_tasks.run_comprehensive_alert_scan",
