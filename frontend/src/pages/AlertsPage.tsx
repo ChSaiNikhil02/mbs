@@ -12,7 +12,8 @@ import {
   CheckCheck, 
   Trash2, 
   Filter,
-  Clock
+  Clock,
+  XCircle
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -40,7 +41,8 @@ export default function AlertsPage() {
   };
 
   const getAlertIcon = (alert: Alert) => {
-    const isUrgent = alert.message.includes("URGENT");
+    const msg = alert.message || "";
+    const isUrgent = msg.includes("URGENT");
     switch (alert.type) {
       case "budget_exceeded": return <AlertTriangle className="h-5 w-5 text-destructive" />;
       case "bill_due": 
@@ -53,7 +55,8 @@ export default function AlertsPage() {
   };
 
   const getAlertLabel = (alert: Alert) => {
-    const isUrgent = alert.message.includes("URGENT");
+    const msg = alert.message || "";
+    const isUrgent = msg.includes("URGENT");
     switch (alert.type) {
       case "budget_exceeded": return "Budget Exceeded";
       case "bill_due": return isUrgent ? "CRITICAL: OVERDUE" : "Bill Due";
@@ -62,7 +65,7 @@ export default function AlertsPage() {
     }
   };
 
-  const filteredAlerts = alerts.filter(a => filter === "all" || a.type === filter);
+  const filteredAlerts = (alerts || []).filter(a => filter === "all" || a.type === filter);
 
   if (isLoading && alerts.length === 0) {
     return <LoadingState message="Loading your alerts..." />;
@@ -124,7 +127,8 @@ export default function AlertsPage() {
           ) : (
             <div className="divide-y divide-border">
               {filteredAlerts.map((alert) => {
-                const isUrgent = alert.message.includes("URGENT");
+                const msg = alert.message || "";
+                const isUrgent = msg.includes("URGENT");
                 return (
                   <div 
                     key={alert.id} 
@@ -162,31 +166,31 @@ export default function AlertsPage() {
                     </div>
 
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {!alert.is_read && (
+                      {!alert.is_read && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleMarkAsRead(alert.id)}
+                          disabled={markAsRead.isPending}
+                          title="Mark as read"
+                        >
+                          <CheckCheck className="h-4 w-4 text-success" />
+                        </Button>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        onClick={() => handleMarkAsRead(alert.id)}
-                        disabled={markAsRead.isPending}
-                        title="Mark as read"
+                        onClick={() => handleDelete(alert.id)}
+                        disabled={deleteAlert.isPending}
+                        className="text-muted-foreground hover:text-destructive"
+                        title="Delete alert"
                       >
-                        <CheckCheck className="h-4 w-4 text-success" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-                    )}
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => handleDelete(alert.id)}
-                      disabled={deleteAlert.isPending}
-                      className="text-muted-foreground hover:text-destructive"
-                      title="Delete alert"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
             </div>
           )}
         </CardContent>
