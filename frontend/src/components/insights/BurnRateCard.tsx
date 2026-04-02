@@ -3,6 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { BurnRateData } from "@/hooks/useInsights";
 import { AlertTriangle, CheckCircle2, TrendingUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface BurnRateCardProps {
   data?: BurnRateData;
@@ -10,6 +11,8 @@ interface BurnRateCardProps {
 }
 
 export default function BurnRateCard({ data, isLoading }: BurnRateCardProps) {
+  const navigate = useNavigate();
+
   if (isLoading) {
     return (
       <Card className="shadow-banking border-none">
@@ -104,7 +107,7 @@ export default function BurnRateCard({ data, isLoading }: BurnRateCardProps) {
           ) : (
             <div className="py-2 text-center">
               <p className="text-[10px] text-muted-foreground">No category budgets set.</p>
-              <Button variant="link" className="text-[10px] h-auto p-0" onClick={() => window.location.href='/budgets'}>
+              <Button variant="link" className="text-[10px] h-auto p-0" onClick={() => navigate('/dashboard/budgets')}>
                 Set Budgets
               </Button>
             </div>
